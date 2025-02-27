@@ -49,6 +49,26 @@ const WelcomePage: React.FC = () => {
   const handleNavigateToViewBPMN = () => {
     navigate('/view-bpmn');
   };
+  
+  const handleUpload = async () => {
+    if (!bpmnFile || !csvFile) return;
+  
+    const formData = new FormData();
+    formData.append("bpmn", bpmnFile);
+    formData.append("csv", csvFile);
+  
+    try {
+      const response = await fetch("http://127.0.0.1:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await response.json();
+      console.log("Response:", data);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    }
+  };
 
   return (
     <Box sx={{ width: '100%', maxWidth: 700, margin: '0 auto', textAlign: 'center', padding: 4 }}>
@@ -131,6 +151,27 @@ const WelcomePage: React.FC = () => {
         >
           View BPMN
         </Button>
+        <Button
+  variant="contained"
+  color="secondary"
+  onClick={handleUpload}
+  disabled={!bpmnFile || !csvFile}
+  sx={{
+    padding: '12px 24px',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    width: '100%',
+    maxWidth: 300,
+    backgroundColor: !bpmnFile || !csvFile ? 'grey.400' : 'secondary.main',
+    '&:hover': {
+      backgroundColor: !bpmnFile || !csvFile ? 'grey.400' : 'secondary.dark',
+    },
+    alignSelf: 'center',
+  }}
+>
+  Upload & Process
+</Button>
+
       </Stack>
     </Box>
   );
