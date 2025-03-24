@@ -7,9 +7,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const WelcomePage: React.FC = () => {
   const [bpmnFile, setBpmnFile] = useState<File | null>(null);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [xesFile, setXesFile] = useState<File | null>(null);
   const navigate = useNavigate();
-  const { setBpmnFileContent, setCsvFileContent } = useFileContext();
+  const { setBpmnFileContent, setXesFileContent } = useFileContext();
 
   useEffect(() => {
     // Automatically load the BPMN file from the public folder
@@ -51,11 +51,11 @@ const WelcomePage: React.FC = () => {
   };
   
   const handleUpload = async () => {
-    if (!bpmnFile || !csvFile) return;
+    if (!bpmnFile || !xesFile) return;
   
     const formData = new FormData();
     formData.append("bpmn", bpmnFile);
-    formData.append("csv", csvFile);
+    formData.append("xes", xesFile);
   
     try {
       const response = await fetch("http://127.0.0.1:5000/upload", {
@@ -77,7 +77,7 @@ const WelcomePage: React.FC = () => {
         Welcome to the Conformance Analysis App
       </Typography>
       <Typography variant="body1" gutterBottom sx={{ marginBottom: 3 }}>
-        Upload your BPMN and CSV files to start analyzing process conformance.
+        Upload your BPMN and XES files to start analyzing process conformance.
       </Typography>
 
       <Stack spacing={3}>
@@ -105,24 +105,24 @@ const WelcomePage: React.FC = () => {
           />
         </Paper>
 
-        {/* CSV File Upload */}
+        {/* XES File Upload */}
         <Paper sx={{ padding: 3, borderRadius: 2, boxShadow: 3, textAlign: 'left' }}>
           <Typography variant="h6" gutterBottom>
             <UploadFileIcon sx={{ marginRight: 1, verticalAlign: 'middle' }} />
-            Upload CSV File
+            Upload XES File
           </Typography>
           <TextField
             type="file"
-            inputProps={{ accept: '.csv' }}
-            onChange={(event) => handleFileChange(event, setCsvFile, setCsvFileContent)}
+            inputProps={{ accept: '.xes' }}
+            onChange={(event) => handleFileChange(event, setXesFile, setXesFileContent)}
             fullWidth
             variant="outlined"
             helperText={
-              csvFile ? (
-                `Selected File: ${csvFile.name}`
+              xesFile ? (
+                `Selected File: ${xesFile.name}`
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Please upload a valid `.csv` file
+                  Please upload a valid `.xes` file
                 </Typography>
               )
             }
@@ -155,16 +155,16 @@ const WelcomePage: React.FC = () => {
   variant="contained"
   color="secondary"
   onClick={handleUpload}
-  disabled={!bpmnFile || !csvFile}
+  disabled={!bpmnFile || !xesFile}
   sx={{
     padding: '12px 24px',
     fontSize: '1rem',
     fontWeight: 'bold',
     width: '100%',
     maxWidth: 300,
-    backgroundColor: !bpmnFile || !csvFile ? 'grey.400' : 'secondary.main',
+    backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : 'secondary.main',
     '&:hover': {
-      backgroundColor: !bpmnFile || !csvFile ? 'grey.400' : 'secondary.dark',
+      backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : 'secondary.dark',
     },
     alignSelf: 'center',
   }}
