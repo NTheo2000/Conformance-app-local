@@ -8,6 +8,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 const WelcomePage: React.FC = () => {
   const [bpmnFile, setBpmnFile] = useState<File | null>(null);
   const [xesFile, setXesFile] = useState<File | null>(null);
+  const [fitnessData, setFitnessData] = useState([]);
+  const [binData, setBinData] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+
   const navigate = useNavigate();
   const { setBpmnFileContent, setXesFileContent } = useFileContext();
 
@@ -53,22 +58,38 @@ const WelcomePage: React.FC = () => {
   const handleUpload = async () => {
     if (!bpmnFile || !xesFile) return;
   
+    setIsUploading(true); // ⏳ Start loading
+  
     const formData = new FormData();
     formData.append("bpmn", bpmnFile);
     formData.append("xes", xesFile);
   
     try {
-      const response = await fetch("http://127.0.0.1:5000/upload", {
+      const uploadResponse = await fetch("http://127.0.0.1:5000/upload", {
         method: "POST",
         body: formData,
       });
   
-      const data = await response.json();
-      console.log("Response:", data);
+      const uploadData = await uploadResponse.json();
+      console.log("Upload Response:", uploadData);
+  
+      const fitnessResponse = await fetch("http://127.0.0.1:5000/api/fitness");
+      const fitnessJson = await fitnessResponse.json();
+      setFitnessData(fitnessJson);
+      console.log("Fitness Data:", fitnessJson);
+  
+      const binResponse = await fetch("http://127.0.0.1:5000/api/conformance-bins");
+      const binJson = await binResponse.json();
+      setBinData(binJson);
+      console.log("Conformance Bins:", binJson);
     } catch (error) {
-      console.error("Error uploading files:", error);
+      console.error("Error uploading files or fetching data:", error);
+    } finally {
+      setIsUploading(false); // ✅ Stop loading
     }
   };
+  
+  
 
   return (
     <Box sx={{ width: '100%', maxWidth: 700, margin: '0 auto', textAlign: 'center', padding: 4 }}>
@@ -155,7 +176,7 @@ const WelcomePage: React.FC = () => {
   variant="contained"
   color="secondary"
   onClick={handleUpload}
-  disabled={!bpmnFile || !xesFile}
+  disabled={!bpmnFile || !xesFile || isUploading}
   sx={{
     padding: '12px 24px',
     fontSize: '1rem',
@@ -169,8 +190,9 @@ const WelcomePage: React.FC = () => {
     alignSelf: 'center',
   }}
 >
-  Upload & Process
+  {isUploading ? "Uploading..." : "Upload & Process"}
 </Button>
+
 
       </Stack>
     </Box>
