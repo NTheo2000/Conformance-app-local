@@ -5,7 +5,10 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import { Bar } from 'react-chartjs-2';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import InfoIcon from '@mui/icons-material/Info';
-import { useEffect } from 'react';
+import { useFileContext } from './FileContext';
+
+
+
 
 // Register necessary components for Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, ChartTooltip, Legend, zoomPlugin);
@@ -51,33 +54,12 @@ const aggregateTraces = (traces: { trace: string; conformance: number }[], numBi
 
 
 const HeatMapAggr: React.FC = () => {
-  const [fitnessData, setFitnessData] = useState<{ trace: string; conformance: number }[]>([]);
-  const [conformanceBins, setConformanceBins] = useState<{ averageConformance: number; traceCount: number }[]>([]);
-
+  const { fitnessData, conformanceBins } = useFileContext();
   const [conformance, setConformance] = useState<number>(0);
   const [selectedTraces, setSelectedTraces] = useState<number[]>([]);
   const [traceInput, setTraceInput] = useState<string>('');
   const chartRef = useRef<any>(null);
   const navigate = useNavigate();
-
-
-useEffect(() => {
-  // Fetch fitness data
-  fetch("http://127.0.0.1:5000/api/fitness")
-    .then((res) => res.json())
-    .then((data) => {
-      setFitnessData(data);
-    })
-    .catch((err) => console.error("Failed to load fitness data", err));
-
-  // Fetch bin data
-  fetch("http://127.0.0.1:5000/api/conformance-bins")
-    .then((res) => res.json())
-    .then((data) => {
-      setConformanceBins(data);
-    })
-    .catch((err) => console.error("Failed to load conformance bins", err));
-}, []);
 
   const traces = fitnessData.map((item) => item.trace);
   const conformanceValues = fitnessData.map((item) => item.conformance);
@@ -187,11 +169,14 @@ useEffect(() => {
       maintainAspectRatio: false,
     };
   } else {
-    const aggregatedBins = conformanceBins.map((bin, index) => ({
-      traces: [], // not needed in your case
+    const aggregatedBins = conformanceBins
+    .filter((bin) => bin.averageConformance >= conformance)
+    .map((bin) => ({
+      traces: [],
       averageConformance: bin.averageConformance,
       traceCount: bin.traceCount,
     }));
+  
     
 
     data = {

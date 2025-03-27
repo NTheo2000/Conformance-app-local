@@ -8,13 +8,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 const WelcomePage: React.FC = () => {
   const [bpmnFile, setBpmnFile] = useState<File | null>(null);
   const [xesFile, setXesFile] = useState<File | null>(null);
-  const [fitnessData, setFitnessData] = useState([]);
   const [binData, setBinData] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
 
   const navigate = useNavigate();
-  const { setBpmnFileContent, setXesFileContent } = useFileContext();
+  const { setBpmnFileContent, setXesFileContent, setFitnessData, setConformanceBins } = useFileContext();
+
 
   useEffect(() => {
     // Automatically load the BPMN file from the public folder
@@ -80,8 +80,9 @@ const WelcomePage: React.FC = () => {
   
       const binResponse = await fetch("http://127.0.0.1:5000/api/conformance-bins");
       const binJson = await binResponse.json();
-      setBinData(binJson);
+      setConformanceBins(binJson);
       console.log("Conformance Bins:", binJson);
+      
     } catch (error) {
       console.error("Error uploading files or fetching data:", error);
     } finally {
@@ -89,7 +90,8 @@ const WelcomePage: React.FC = () => {
     }
   };
   
-  
+
+
 
   return (
     <Box sx={{ width: '100%', maxWidth: 700, margin: '0 auto', textAlign: 'center', padding: 4 }}>
