@@ -15,6 +15,12 @@ interface ConformanceBin {
   traceCount: number;
 }
 
+interface ActivityDeviation {
+  name: string;
+  skipped: number;
+  inserted: number;
+}
+
 interface FileContextType {
   // File contents
   bpmnFileContent: string | null;
@@ -27,12 +33,16 @@ interface FileContextType {
   fitnessData: TraceFitness[];
   conformanceBins: ConformanceBin[];
 
+  // Activity deviation stats
+  activityDeviations: ActivityDeviation[];
+
   // Setters
   setBpmnFileContent: (content: string | null) => void;
   setXesFileContent: (content: string | null) => void;
   setExtractedElements: (elements: ExtractedElement[]) => void;
   setFitnessData: (data: TraceFitness[]) => void;
   setConformanceBins: (bins: ConformanceBin[]) => void;
+  setActivityDeviations: (data: ActivityDeviation[]) => void;
 }
 
 // Create context
@@ -43,9 +53,9 @@ export const FileProvider = ({ children }: { children: ReactNode }) => {
   const [bpmnFileContent, setBpmnFileContent] = useState<string | null>(null);
   const [xesFileContent, setXesFileContent] = useState<string | null>(null);
   const [extractedElements, setExtractedElements] = useState<ExtractedElement[]>([]);
-
   const [fitnessData, setFitnessData] = useState<TraceFitness[]>([]);
   const [conformanceBins, setConformanceBins] = useState<ConformanceBin[]>([]);
+  const [activityDeviations, setActivityDeviations] = useState<ActivityDeviation[]>([]);
 
   return (
     <FileContext.Provider
@@ -60,6 +70,8 @@ export const FileProvider = ({ children }: { children: ReactNode }) => {
         setFitnessData,
         conformanceBins,
         setConformanceBins,
+        activityDeviations,
+        setActivityDeviations,
       }}
     >
       {children}
@@ -75,5 +87,6 @@ export const useFileContext = (): FileContextType => {
   }
   return context;
 };
+
 
 

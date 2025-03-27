@@ -7,6 +7,7 @@ import os
 from process_mining.process_bpmn import parse_bpmn
 from process_mining.process_xes import parse_xes
 from process_mining.conformance_alignments import calculate_alignments, get_fitness_per_trace, get_conformance_bins
+from process_mining.activity_deviations import get_activity_deviations
 
 app = Flask(__name__)
 CORS(app)
@@ -22,7 +23,6 @@ last_uploaded_files = {
 
 @app.route('/upload', methods=['POST'])
 def upload_files():
-    """Handles BPMN and XES file uploads."""
     if 'bpmn' not in request.files or 'xes' not in request.files:
         return jsonify({"error": "Both BPMN and XES files are required"}), 400
 
@@ -35,7 +35,6 @@ def upload_files():
     bpmn_file.save(bpmn_path)
     xes_file.save(xes_path)
 
-    # Update global references
     last_uploaded_files['bpmn'] = bpmn_path
     last_uploaded_files['xes'] = xes_path
 
@@ -63,6 +62,14 @@ def api_conformance_bins():
     aligned_traces = calculate_alignments(last_uploaded_files['bpmn'], last_uploaded_files['xes'])
     fitness_data = get_fitness_per_trace(aligned_traces)
     return jsonify(get_conformance_bins(fitness_data))
+
+@app.route('/api/activity-deviations', methods=['GET'])
+def api_activity_deviations():
+    if not last_uploaded_files['bpmn'] or not last_uploaded_files['xes']:
+        return jsonify({"error": "No files uploaded yet."}), 400
+
+    deviations = get_activity_deviations(last_uploaded_files['bpmn'], last_uploaded_files['xes'])
+    return jsonify(deviations)
 
 if __name__ == '__main__':
     app.run(debug=True)

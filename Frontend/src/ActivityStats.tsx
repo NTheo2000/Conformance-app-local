@@ -7,17 +7,29 @@ import InfoIcon from '@mui/icons-material/Info';
 
 const ActivityStats: React.FC = () => {
   const navigate = useNavigate();
-  const { extractedElements } = useFileContext();
+  const { extractedElements, activityDeviations } = useFileContext();
 
-  const activityStats = extractedElements.map((element: any) => {
-    const skipped = Math.random() * 100;
-    const inserted = Math.random() * 100;
+
+  const activityStats = extractedElements
+  .map((element: any) => {
+    const deviation = activityDeviations.find((d) => d.name === element.name);
+    const skipped = deviation?.skipped || 0;
+    const inserted = deviation?.inserted || 0;
     return {
       name: element.name,
       skipped,
       inserted,
+      total: skipped + inserted, // for sorting
     };
-  });
+  })
+  .sort((a, b) => b.total - a.total) // descending sort by total
+  .map(({ name, skipped, inserted }) => ({
+    name,
+    skipped,
+    inserted,
+  })); // remove the 'total' key for final rendering
+
+  
 
   const sharedHeight = activityStats.length * 40;
 
@@ -52,7 +64,7 @@ const ActivityStats: React.FC = () => {
         }}
       >
         <Typography variant="h5" gutterBottom sx={{ textAlign: 'center', margin: '16px 0' }}>
-          Percentage of times skipped and inserted
+          Times skipped and inserted per activity
         </Typography>
 
         <BarChart
@@ -68,7 +80,8 @@ const ActivityStats: React.FC = () => {
           <RechartsTooltip
             contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #ddd' }}
             labelStyle={{ fontWeight: 'bold' }}
-            formatter={(value: number, name: string) => [`${value.toFixed(2)}%`, name]}
+            formatter={(value: number, name: string) => [`${Math.round(value)}`, name]}
+
           />
           <Legend verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: 20 }} />
           <Bar dataKey="skipped" name="Skipped" fill="purple">

@@ -13,7 +13,8 @@ const WelcomePage: React.FC = () => {
 
 
   const navigate = useNavigate();
-  const { setBpmnFileContent, setXesFileContent, setFitnessData, setConformanceBins } = useFileContext();
+  const { setBpmnFileContent, setXesFileContent, setFitnessData, setConformanceBins, setActivityDeviations } = useFileContext();
+
 
 
   useEffect(() => {
@@ -73,16 +74,24 @@ const WelcomePage: React.FC = () => {
       const uploadData = await uploadResponse.json();
       console.log("Upload Response:", uploadData);
   
+      // Fetch fitness data
       const fitnessResponse = await fetch("http://127.0.0.1:5000/api/fitness");
       const fitnessJson = await fitnessResponse.json();
       setFitnessData(fitnessJson);
       console.log("Fitness Data:", fitnessJson);
   
+      // Fetch conformance bins
       const binResponse = await fetch("http://127.0.0.1:5000/api/conformance-bins");
       const binJson = await binResponse.json();
       setConformanceBins(binJson);
       console.log("Conformance Bins:", binJson);
-      
+  
+      // ✅ Fetch activity deviations
+      const deviationResponse = await fetch("http://127.0.0.1:5000/api/activity-deviations");
+      const deviationJson = await deviationResponse.json();
+      setActivityDeviations(deviationJson);
+      console.log("Activity Deviations:", deviationJson);
+  
     } catch (error) {
       console.error("Error uploading files or fetching data:", error);
     } finally {
