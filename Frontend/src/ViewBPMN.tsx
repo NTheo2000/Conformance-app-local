@@ -16,7 +16,8 @@ const ViewBPMN: React.FC = () => {
   const navigate = useNavigate();
   const bpmnContainerRef = useRef<HTMLDivElement | null>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
-  const { bpmnFileContent, setExtractedElements } = useFileContext();
+  const { bpmnFileContent, setExtractedElements, activityDeviations } = useFileContext();
+
 
   const [activityCounts, setActivityCounts] = useState({
     red: 0,
@@ -58,29 +59,45 @@ const ViewBPMN: React.FC = () => {
   
 
   const gradientColors = [
-    '#67000d', '#a50f15', '#cb181d', '#ef3b2c', '#fb6a4a', 
-    '#fc9272', '#fcbba1', '#fee0d2', '#fff5f0'
+    '#fff5f0', '#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a',
+    '#ef3b2c', '#cb181d', '#a50f15', '#67000d'
   ];
   
-  const getGradientColor = (value: number) => {
-    // Scale value from 0 (low) to 1 (high)
-    const index = Math.min(Math.floor(value * (gradientColors.length - 1)), gradientColors.length - 1);
-    return { stroke: gradientColors[index], fill: gradientColors[index] };
+  
+  const applyColors = (deviations: { [activityId: string]: { skipped: number; inserted: number } }) => {
+    const totalDeviations = Object.values(deviations).map(d => d.skipped + d.inserted);
+    const sorted = [...totalDeviations].sort((a, b) => a - b);
+  
+    // 10% quantile thresholds
+    const quantiles: number[] = [];
+    for (let i = 0; i < 9; i++) {
+      const index = Math.floor((i / 9) * sorted.length);
+      quantiles.push(sorted[index]);
+    }
+  
+    Object.entries(deviations).forEach(([activityId, d]) => {
+      const total = d.skipped + d.inserted;
+      const index = quantiles.findIndex(q => total <= q);
+      const color = gradientColors[index >= 0 ? index : gradientColors.length - 1];
+  
+      const element = (modelerRef.current?.get('elementRegistry') as any)?.get(activityId);
+  
+      if (element) {
+        (modelerRef.current?.get('modeling') as any)?.setColor([element], {
+          stroke: color,
+          fill: color,
+        });
+  
+        const gfx = document.querySelector(`[data-element-id="${element.id}"] text`);
+        if (gfx) {
+          (gfx as SVGTextElement).style.fill = 'black';
+        }
+      }
+    });
   };
   
-  const applyColors = (stats: Record<string, { skipped: number; inserted: number }>) => {
-    Object.keys(stats).forEach((activityId) => {
-      const activity = stats[activityId] || { skipped: 0, inserted: 0 };
-      const conformanceScore = activity.inserted / (activity.skipped + activity.inserted);
-      highlightActivity(activityId, getGradientColor(conformanceScore));
-    });
   
-    setActivityCounts({
-      red: Object.keys(stats).length,
-      orange: 0,
-      green: 0,
-    });
-  };
+  
   
   
 
@@ -112,27 +129,29 @@ const ViewBPMN: React.FC = () => {
         
         setExtractedElements(extractedElements);
         
-        // Dynamically generate activityStats
-        const generatedStats = extractedElements.reduce(
+        const realStats = extractedElements.reduce(
           (acc: Record<string, { skipped: number; inserted: number }>, activity: { id: string; name: string }) => {
+            const deviation = activityDeviations.find((d) => d.name === activity.name);
             acc[activity.id] = {
-              skipped: Math.floor(Math.random() * 100), // Generate dummy values, replace with real logic if needed
-              inserted: Math.floor(Math.random() * 100),
+              skipped: deviation?.skipped || 0,
+              inserted: deviation?.inserted || 0,
             };
             return acc;
           },
           {} as Record<string, { skipped: number; inserted: number }>
         );
         
+ 
         
         
-        setActivityStats(generatedStats);
-        console.log("Updated activityStats:", generatedStats);
+        setActivityStats(realStats);
+        console.log("Updated activityStats:", realStats);
+        applyColors(realStats);
+
         
           canvas.zoom('fit-viewport');
           disableHoverEffects();
-          applyColors(generatedStats);
-
+          
           const eventBus = modelerRef.current!.get('eventBus') as any;
           eventBus.on('element.hover', (event: any) => {
             const element = event.element;
@@ -149,25 +168,22 @@ const ViewBPMN: React.FC = () => {
               statsBox.style.width = '200px';
           
               // ✅ Use `generatedStats` instead of outdated `activityStats`
-              const stats = generatedStats[element.id] || { skipped: 0, inserted: 0 };
+              const stats = activityDeviations.find((d) => d.name === element.businessObject.name) || { skipped: 0, inserted: 0 };
+
+
           
               statsBox.innerHTML = `
-                <div style="margin-bottom: 8px; text-align: center; font-weight: bold; color: white; background-color: black; padding: 4px; border-radius: 4px;">Activity Stats</div>
-                <div style="display: flex; align-items: center;">
-                  <div style="width: 70px; color: black;">Skipped:</div>
-                  <div style="flex: 1; background-color: lightgray; height: 8px; margin-right: 8px;">
-                    <div style="width: ${stats.skipped}%; background-color: purple; height: 100%;"></div>
-                  </div>
-                  <div style="color: black;">${stats.skipped}%</div>
-                </div>
-                <div style="display: flex; align-items: center; margin-top: 4px;">
-                  <div style="width: 70px; color: black;">Inserted:</div>
-                  <div style="flex: 1; background-color: lightgray; height: 8px; margin-right: 8px;">
-                    <div style="width: ${stats.inserted}%; background-color: yellow; height: 100%;"></div>
-                  </div>
-                  <div style="color: black;">${stats.inserted}%</div>
-                </div>
-              `;
+              <div style="margin-bottom: 8px; text-align: center; font-weight: bold; color: white; background-color: black; padding: 4px; border-radius: 4px;">Activity Stats</div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-weight: bold; color: black;">Skipped:</span>
+                <span style="color: black;">${stats.skipped}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: bold; color: black;">Inserted:</span>
+                <span style="color: black;">${stats.inserted}</span>
+              </div>
+            `;
+            
           
               document.body.appendChild(statsBox);
           
@@ -199,11 +215,10 @@ const ViewBPMN: React.FC = () => {
     };
   }, [bpmnFileContent, setExtractedElements]);
 
-  useEffect(() => {
-    if (Object.keys(activityStats).length > 0) {
-      applyColors(activityStats);
-    }
-  }, [activityStats]);
+
+  
+  
+  
   
 
   const handleZoomIn = () => {
