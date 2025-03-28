@@ -165,7 +165,7 @@ const ViewBPMN: React.FC = () => {
               statsBox.style.borderRadius = '4px';
               statsBox.style.pointerEvents = 'none';
               statsBox.style.zIndex = '1000';
-              statsBox.style.width = '200px';
+              statsBox.style.width = '140px';
           
               // ✅ Use `generatedStats` instead of outdated `activityStats`
               const stats = activityDeviations.find((d) => d.name === element.businessObject.name) || { skipped: 0, inserted: 0 };
@@ -173,16 +173,19 @@ const ViewBPMN: React.FC = () => {
 
           
               statsBox.innerHTML = `
-              <div style="margin-bottom: 8px; text-align: center; font-weight: bold; color: white; background-color: black; padding: 4px; border-radius: 4px;">Activity Stats</div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="font-weight: bold; color: black;">Skipped:</span>
-                <span style="color: black;">${stats.skipped}</span>
+              <div style="margin-bottom: 8px; text-align: center; font-weight: bold; color: white; background-color: black; padding: 4px; border-radius: 4px;">
+                Activity Stats
               </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="font-weight: bold; color: black;">Inserted:</span>
-                <span style="color: black;">${stats.inserted}</span>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0; font-size: 14px;">
+                <span style="font-weight: bold; color: black;">Times Skipped:</span>
+                <span style="color: black; font-weight: 500;">${stats.skipped}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 14px;">
+                <span style="font-weight: bold; color: black;">Times Inserted:</span>
+                <span style="color: black; font-weight: 500;">${stats.inserted}</span>
               </div>
             `;
+            
             
           
               document.body.appendChild(statsBox);
@@ -278,7 +281,7 @@ const ViewBPMN: React.FC = () => {
   }}
 >
   <Typography variant="body2" sx={{ marginRight: 2, fontWeight: 'bold' }}>
-    Low Conformance
+    High Conformance
   </Typography>
   <Box
     sx={{
@@ -290,7 +293,7 @@ const ViewBPMN: React.FC = () => {
     }}
   />
   <Typography variant="body2" sx={{ marginLeft: 2, fontWeight: 'bold' }}>
-    High Conformance
+    Low Conformance
   </Typography>
 </Box>
 
