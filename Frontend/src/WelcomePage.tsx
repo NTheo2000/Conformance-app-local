@@ -12,7 +12,16 @@ const WelcomePage: React.FC = () => {
   const [uploadComplete, setUploadComplete] = useState(false);
 
   const navigate = useNavigate();
-  const { setBpmnFileContent, setXesFileContent, setFitnessData, setConformanceBins, setActivityDeviations } = useFileContext();
+  const {
+    setBpmnFileContent,
+    setXesFileContent,
+    setFitnessData,
+    setConformanceBins,
+    setActivityDeviations,
+    setOutcomeBins,
+    setDesiredOutcomes
+  } = useFileContext();
+  
 
   useEffect(() => {
     const preselectedBpmnPath = 'Model_InternationalDeclarations.bpmn';
@@ -86,6 +95,12 @@ const WelcomePage: React.FC = () => {
       const deviationJson = await deviationResponse.json();
       setActivityDeviations(deviationJson);
       console.log('Activity Deviations:', deviationJson);
+
+      const outcomeResponse = await fetch('http://127.0.0.1:5000/api/outcome-distribution');
+      const outcomeJson = await outcomeResponse.json();
+      setOutcomeBins(outcomeJson.bins);
+      setDesiredOutcomes(outcomeJson.desiredOutcomes);
+      console.log('Outcome Distribution:', outcomeJson);
 
       setUploadComplete(true);
     } catch (error) {

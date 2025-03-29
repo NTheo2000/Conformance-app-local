@@ -1,7 +1,6 @@
-# process_mining/conformance_alignments.py
-
 import os
 import pm4py
+import xml.etree.ElementTree as ET
 from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.algo.conformance.alignments.petri_net import algorithm as alignments
 
@@ -42,4 +41,63 @@ def get_conformance_bins(fitness_data):
             bin["averageConformance"] /= bin["traceCount"]
 
     return bins
+
+def extract_desired_outcomes_from_bpmn(bpmn_path):
+    tree = ET.parse(bpmn_path)
+    root = tree.getroot()
+    ns = {'bpmn': 'http://www.omg.org/spec/BPMN/20100524/MODEL'}
+
+    end_events = root.findall(".//bpmn:endEvent", ns)
+    desired_outcomes = []
+
+    for event in end_events:
+        has_error_definition = event.find("bpmn:errorEventDefinition", ns) is not None
+        if not has_error_definition:
+            incoming = event.find("bpmn:incoming", ns)
+            if incoming is not None:
+                incoming_flow = incoming.text
+                seq_flows = root.findall(".//bpmn:sequenceFlow", ns)
+                for flow in seq_flows:
+                    if flow.get("id") == incoming_flow:
+                        source_ref = flow.get("sourceRef")
+                        task = root.find(f".//bpmn:task[@id='{source_ref}']", ns)
+                        if task is not None and "name" in task.attrib:
+                            desired_outcomes.append(task.attrib["name"])
+
+    return list(set(desired_outcomes))
+
+def get_outcome_distribution(bpmn_path, xes_path, aligned_traces):
+    desired_outcomes = extract_desired_outcomes_from_bpmn(bpmn_path)
+    log = xes_importer.apply(xes_path)
+
+    bins = [
+        {"range": [i / 10, (i + 1) / 10], "traceCount": 0, "correctCount": 0}
+        for i in range(10)
+    ]
+
+    for i, alignment in enumerate(aligned_traces):
+        fitness = alignment.get("fitness", 0)
+        trace = log[i]
+
+        if not trace:
+            continue
+
+        last_activity = trace[-1]['concept:name']
+        bin_index = min(int(fitness * 10), 9)
+
+        bins[bin_index]["traceCount"] += 1
+        if last_activity in desired_outcomes:
+            bins[bin_index]["correctCount"] += 1
+
+    for b in bins:
+        if b["traceCount"] > 0:
+            b["percentageEndingCorrectly"] = round((b["correctCount"] / b["traceCount"]) * 100, 2)
+        else:
+            b["percentageEndingCorrectly"] = 0.0
+        del b["correctCount"]
+
+    return {
+        "desiredOutcomes": desired_outcomes,
+        "bins": bins
+    }
 

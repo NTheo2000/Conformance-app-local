@@ -33,7 +33,6 @@ const generateRandomConformanceDistribution = () => {
 
 const ConformanceOutcomeChart: React.FC = () => {
   const [conformance, setConformance] = useState<number>(0);
-  const [conformanceDistribution, setConformanceDistribution] = useState(generateRandomConformanceDistribution);
   const [selectedActivity, setSelectedActivity] = useState<string | null>('Payment Handled');
   const chartRef = useRef<any>(null);
   const navigate = useNavigate();
@@ -52,44 +51,40 @@ const ConformanceOutcomeChart: React.FC = () => {
 
   const handleActivityChange = (event: any) => {
     setSelectedActivity(event.target.value);
-    setConformanceDistribution(generateRandomConformanceDistribution()); // Update data dynamically
   };
+  
 
-  const traces = conformanceDistribution.flatMap((group) =>
-    Array.from({ length: group.count }, () => ({
-      conformance: (Math.random() * (group.range[1] - group.range[0])) + group.range[0],
-      lastActivity: Math.random() < (group.finalizedPercentage / 100) ? 'A_finalized' : 'B_incomplete'
-    }))
-  );
-
-  const filterDataByThreshold = (threshold: number) => {
-    return traces.filter((item) => item.conformance >= threshold);
-  };
-
-  const prepareChartData = (filteredData: any[]) => {
-    const conformanceRanges = conformanceDistribution.map((range) => {
-      const tracesInRange = filteredData.filter((item) => item.conformance >= range.range[0] && item.conformance < range.range[1]);
-
+  const { outcomeBins, desiredOutcomes } = useFileContext();
+  const prepareChartData = () => {
+    const filteredBins = outcomeBins.filter(
+      (bin) => bin.range[0] >= conformance || bin.range[1] > conformance
+    );
+    const maxCount = Math.max(...outcomeBins.map(bin => bin.traceCount || 1)); 
+    const conformanceRanges = filteredBins.map((bin) => {
+      const midpoint = (bin.range[0] + bin.range[1]) / 2;
       return {
-        x: (range.range[0] + range.range[1]) / 2,
-        y: range.finalizedPercentage,
-        r: Math.sqrt(tracesInRange.length) * 2,
-        count: tracesInRange.length
+        x: midpoint,
+        y: bin.percentageEndingCorrectly,
+        r: (bin.traceCount / maxCount) * 30 + 5, 
+        count: bin.traceCount,
       };
     });
-
+  
     return {
       datasets: [
         {
-          label: '', // Ensuring no unwanted labels (removes red bar)
+          label: '',
           data: conformanceRanges,
           backgroundColor: conformanceRanges.map((range) => getColorForValue(range.x)),
           borderColor: '#000000',
-          borderWidth: 1
-        }
-      ]
+          borderWidth: 1,
+        },
+      ],
     };
   };
+  
+
+
 
   const options = {
     scales: {
@@ -98,21 +93,18 @@ const ConformanceOutcomeChart: React.FC = () => {
           display: true,
           text: 'Conformance',
         },
-        min: 0,
-        max: 1,
       },
       y: {
         title: {
           display: true,
-          text: selectedActivity
-            ? `Percentage of Traces Ending with ${selectedActivity}`
-            : 'Percentage of Traces Ending with Payment Handled', // Default
+          text: `Percentage of Traces Ending with ${desiredOutcomes[0] || 'desired outcome'}`,
         },
-        min: 0,
-        max: 100,
-      },
+        suggestedMin: 0,
+        suggestedMax: 100,
+      }
       
     },
+    
     plugins: {
       zoom: {
         pan: { enabled: true, mode: 'xy' as const },
@@ -135,10 +127,11 @@ const ConformanceOutcomeChart: React.FC = () => {
   };
   
 
-  const chartData = prepareChartData(filterDataByThreshold(conformance));
+  const chartData = prepareChartData();
+
 
   return (
-    <Box sx={{ width: 800, height: 600, margin: '0 auto', position: 'relative' }}>
+    <Box sx={{ width: '90vw', maxWidth: 1000, height: 600, margin: '0 auto', position: 'relative', overflow: 'visible' }}>
       <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
         <Typography variant="h5" gutterBottom align="center">
           Bubble Chart: Conformance vs Process Outcome
@@ -168,16 +161,6 @@ const ConformanceOutcomeChart: React.FC = () => {
       <Button variant="contained" color="primary" onClick={handleReset} sx={{ marginBottom: 2 }}>
         Reset
       </Button>
-
-      <Typography variant="h6" gutterBottom>
-        Select Process Outcome
-      </Typography>
-      <Select value={selectedActivity || ""} onChange={handleActivityChange} displayEmpty sx={{ minWidth: 200, maxWidth: 250 }}>
-        <MenuItem value="" disabled>Select Activity</MenuItem>
-        {extractedElements.map((element: any) => (
-          <MenuItem key={element.name} value={element.name}>{element.name}</MenuItem>
-        ))}
-      </Select>
 
       <Box sx={{ height: 400, marginTop: 2 }}>
         <Bubble ref={chartRef} data={chartData} options={options} />

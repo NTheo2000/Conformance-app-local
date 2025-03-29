@@ -6,7 +6,13 @@ import os
 
 from process_mining.process_bpmn import parse_bpmn
 from process_mining.process_xes import parse_xes
-from process_mining.conformance_alignments import calculate_alignments, get_fitness_per_trace, get_conformance_bins
+from process_mining.conformance_alignments import (
+    calculate_alignments,
+    get_fitness_per_trace,
+    get_conformance_bins,
+    get_outcome_distribution  
+)
+
 from process_mining.activity_deviations import get_activity_deviations
 
 app = Flask(__name__)
@@ -70,6 +76,19 @@ def api_activity_deviations():
 
     deviations = get_activity_deviations(last_uploaded_files['bpmn'], last_uploaded_files['xes'])
     return jsonify(deviations)
+@app.route('/api/outcome-distribution', methods=['GET'])
+def api_outcome_distribution():
+    if not last_uploaded_files['bpmn'] or not last_uploaded_files['xes']:
+        return jsonify({"error": "No files uploaded yet."}), 400
+
+    aligned_traces = calculate_alignments(last_uploaded_files['bpmn'], last_uploaded_files['xes'])
+    result = get_outcome_distribution(
+        last_uploaded_files['bpmn'],
+        last_uploaded_files['xes'],
+        aligned_traces
+    )
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
