@@ -23,20 +23,6 @@ const WelcomePage: React.FC = () => {
   } = useFileContext();
   
 
-  useEffect(() => {
-    const preselectedBpmnPath = 'Model_InternationalDeclarations.bpmn';
-    fetch(preselectedBpmnPath)
-      .then((response) => response.text())
-      .then((content) => {
-        const file = new File([content], 'Model_InternationalDeclarations.bpmn', {
-          type: 'application/xml',
-        });
-        setBpmnFile(file);
-        setBpmnFileContent(content);
-      })
-      .catch((error) => console.error('Error loading BPMN file:', error));
-  }, [setBpmnFileContent]);
-
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     setFile: React.Dispatch<React.SetStateAction<File | null>>,
@@ -134,10 +120,11 @@ const WelcomePage: React.FC = () => {
             helperText={
               bpmnFile ? `Selected File: ${bpmnFile.name}` : (
                 <Typography variant="body2" color="text.secondary">
-                  A preloaded file "Model_InternationalDeclarations.bpmn" is ready. You can upload another file if needed.
+                  Please upload a valid `.bpmn` file
                 </Typography>
               )
             }
+            
           />
         </Paper>
 
@@ -163,27 +150,28 @@ const WelcomePage: React.FC = () => {
         </Paper>
 
         <Button
-          variant="contained"
-          color={uploadComplete ? 'primary' : 'secondary'}
-          onClick={handleUploadOrNavigate}
-          disabled={!bpmnFile || !xesFile || isUploading}
-          startIcon={isUploading ? <CircularProgress size={20} color="inherit" /> : uploadComplete ? <VisibilityIcon /> : <UploadFileIcon />}
-          sx={{
-            padding: '12px 24px',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-            width: '100%',
-            maxWidth: 300,
-            backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : undefined,
-            '&:hover': {
-              backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : undefined,
-            },
-            alignSelf: 'center',
-            marginTop: 2,
-          }}
-        >
-          {isUploading ? 'Processing...' : uploadComplete ? 'View BPMN' : 'Upload & Process'}
-        </Button>
+  variant="contained"
+  color="primary" // Always blue
+  onClick={handleUploadOrNavigate}
+  disabled={!bpmnFile || !xesFile || isUploading}
+  startIcon={isUploading ? <CircularProgress size={20} color="inherit" /> : uploadComplete ? <VisibilityIcon /> : <UploadFileIcon />}
+  sx={{
+    padding: '12px 24px',
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    width: '100%',
+    maxWidth: 300,
+    backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : undefined,
+    '&:hover': {
+      backgroundColor: !bpmnFile || !xesFile ? 'grey.400' : undefined,
+    },
+    alignSelf: 'center',
+    marginTop: 2,
+  }}
+>
+  {isUploading ? 'Processing...' : uploadComplete ? 'View BPMN' : 'Upload & Process'}
+</Button>
+
       </Stack>
     </Box>
   );
