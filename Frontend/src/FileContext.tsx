@@ -14,6 +14,11 @@ interface OutcomeBin {
   traceCount: number;
   percentageEndingCorrectly: number;
 }
+interface RoleConformance {
+  role: string;
+  averageConformance: number;
+  traceCount: number;
+}
 
 
 interface ConformanceBin {
@@ -43,6 +48,7 @@ interface FileContextType {
   activityDeviations: ActivityDeviation[];
   outcomeBins: OutcomeBin[];
  desiredOutcomes: string[];
+ roleConformance: RoleConformance[];
 
   // Setters
   setBpmnFileContent: (content: string | null) => void;
@@ -53,6 +59,8 @@ interface FileContextType {
   setActivityDeviations: (data: ActivityDeviation[]) => void;
   setOutcomeBins: (bins: OutcomeBin[]) => void;
   setDesiredOutcomes: (outcomes: string[]) => void;
+  setRoleConformance: (data: RoleConformance[]) => void;
+
   // Outcome distribution
 
 }
@@ -70,6 +78,9 @@ export const FileProvider = ({ children }: { children: ReactNode }) => {
   const [activityDeviations, setActivityDeviations] = useState<ActivityDeviation[]>([]);
   const [outcomeBins, setOutcomeBins] = useState<OutcomeBin[]>([]);
   const [desiredOutcomes, setDesiredOutcomes] = useState<string[]>([]);
+  const [roleConformance, setRoleConformance] = useState<RoleConformance[]>([]);
+
+
 
 
   return (
@@ -91,6 +102,8 @@ export const FileProvider = ({ children }: { children: ReactNode }) => {
 setOutcomeBins,
 desiredOutcomes,
 setDesiredOutcomes,
+roleConformance,
+  setRoleConformance,
 
       }}
     >

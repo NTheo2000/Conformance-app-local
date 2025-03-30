@@ -19,7 +19,8 @@ const WelcomePage: React.FC = () => {
     setConformanceBins,
     setActivityDeviations,
     setOutcomeBins,
-    setDesiredOutcomes
+    setDesiredOutcomes,
+    setRoleConformance
   } = useFileContext();
   
 
@@ -87,6 +88,12 @@ const WelcomePage: React.FC = () => {
       setOutcomeBins(outcomeJson.bins);
       setDesiredOutcomes(outcomeJson.desiredOutcomes);
       console.log('Outcome Distribution:', outcomeJson);
+
+      const roleResponse = await fetch('http://127.0.0.1:5000/api/conformance-by-role');
+      const roleJson = await roleResponse.json();
+      setRoleConformance(roleJson);
+      console.log('Role-Based Conformance:', roleJson);
+
 
       setUploadComplete(true);
     } catch (error) {

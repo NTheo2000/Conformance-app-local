@@ -10,7 +10,8 @@ from process_mining.conformance_alignments import (
     calculate_alignments,
     get_fitness_per_trace,
     get_conformance_bins,
-    get_outcome_distribution  
+    get_outcome_distribution,
+    get_conformance_by_role 
 )
 
 from process_mining.activity_deviations import get_activity_deviations
@@ -87,6 +88,15 @@ def api_outcome_distribution():
         last_uploaded_files['xes'],
         aligned_traces
     )
+    return jsonify(result)
+
+@app.route('/api/conformance-by-role', methods=['GET'])
+def api_conformance_by_role():
+    if not last_uploaded_files['bpmn'] or not last_uploaded_files['xes']:
+        return jsonify({"error": "No files uploaded yet."}), 400
+
+    aligned_traces = calculate_alignments(last_uploaded_files['bpmn'], last_uploaded_files['xes'])
+    result = get_conformance_by_role(last_uploaded_files['xes'], aligned_traces)
     return jsonify(result)
 
 

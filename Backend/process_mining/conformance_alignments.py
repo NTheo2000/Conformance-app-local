@@ -3,6 +3,7 @@ import pm4py
 import xml.etree.ElementTree as ET
 from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.algo.conformance.alignments.petri_net import algorithm as alignments
+from collections import defaultdict
 
 def calculate_alignments(bpmn_path: str, xes_path: str):
     if not os.path.exists(bpmn_path):
@@ -100,4 +101,26 @@ def get_outcome_distribution(bpmn_path, xes_path, aligned_traces):
         "desiredOutcomes": desired_outcomes,
         "bins": bins
     }
+def get_conformance_by_role(xes_path, aligned_traces):
+    log = xes_importer.apply(xes_path)
 
+    role_conformance = defaultdict(list)
+
+    for i, trace in enumerate(log):
+        fitness = aligned_traces[i].get("fitness", 0)
+        roles_in_trace = {event.get("org:role") for event in trace if "org:role" in event}
+
+        for role in roles_in_trace:
+            if role:  # Avoid None
+                role_conformance[role].append(fitness)
+
+    result = []
+    for role, scores in role_conformance.items():
+        avg_conformance = sum(scores) / len(scores)
+        result.append({
+            "role": role,
+            "averageConformance": round(avg_conformance, 4),
+            "traceCount": len(scores)
+        })
+
+    return result
