@@ -52,49 +52,50 @@ const WelcomePage: React.FC = () => {
       handleNavigateToViewBPMN();
       return;
     }
-
+  
     if (!bpmnFile || !xesFile) return;
     setIsUploading(true);
-
+  
     const formData = new FormData();
     formData.append('bpmn', bpmnFile);
     formData.append('xes', xesFile);
-
+  
     try {
-      const uploadResponse = await fetch('http://127.0.0.1:5000/upload', {
+      const baseUrl = 'https://conformance-app-local.onrender.com';
+  
+      const uploadResponse = await fetch(`${baseUrl}/upload`, {
         method: 'POST',
         body: formData,
       });
       const uploadData = await uploadResponse.json();
       console.log('Upload Response:', uploadData);
-
-      const fitnessResponse = await fetch('http://127.0.0.1:5000/api/fitness');
+  
+      const fitnessResponse = await fetch(`${baseUrl}/api/fitness`);
       const fitnessJson = await fitnessResponse.json();
       setFitnessData(fitnessJson);
       console.log('Fitness Data:', fitnessJson);
-
-      const binResponse = await fetch('http://127.0.0.1:5000/api/conformance-bins');
+  
+      const binResponse = await fetch(`${baseUrl}/api/conformance-bins`);
       const binJson = await binResponse.json();
       setConformanceBins(binJson);
       console.log('Conformance Bins:', binJson);
-
-      const deviationResponse = await fetch('http://127.0.0.1:5000/api/activity-deviations');
+  
+      const deviationResponse = await fetch(`${baseUrl}/api/activity-deviations`);
       const deviationJson = await deviationResponse.json();
       setActivityDeviations(deviationJson);
       console.log('Activity Deviations:', deviationJson);
-
-      const outcomeResponse = await fetch('http://127.0.0.1:5000/api/outcome-distribution');
+  
+      const outcomeResponse = await fetch(`${baseUrl}/api/outcome-distribution`);
       const outcomeJson = await outcomeResponse.json();
       setOutcomeBins(outcomeJson.bins);
       setDesiredOutcomes(outcomeJson.desiredOutcomes);
       console.log('Outcome Distribution:', outcomeJson);
-
-      const roleResponse = await fetch('http://127.0.0.1:5000/api/conformance-by-role');
+  
+      const roleResponse = await fetch(`${baseUrl}/api/conformance-by-role`);
       const roleJson = await roleResponse.json();
       setRoleConformance(roleJson);
       console.log('Role-Based Conformance:', roleJson);
-
-
+  
       setUploadComplete(true);
     } catch (error) {
       console.error('Error uploading files or fetching data:', error);
@@ -102,7 +103,6 @@ const WelcomePage: React.FC = () => {
       setIsUploading(false);
     }
   };
-
   return (
     <Box sx={{ width: '100%', maxWidth: 700, margin: '0 auto', textAlign: 'center', padding: 4 }}>
       <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
